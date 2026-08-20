@@ -206,9 +206,11 @@
     labelsGroup.setAttribute("id", "city-labels");
     labelsGroup.setAttribute("pointer-events", "none");
 
-    Object.keys(cityIndex).forEach(function (code) {
+    // mostrar apenas cidades cadastradas (com dados)
+    Object.keys(db.cities).forEach(function (code) {
       var meta = cityIndex[code];
-      var st = (db.cities[code] && db.cities[code].status) || "none";
+      if (!meta) return;
+      var st = db.cities[code].status || "none";
 
       var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
       text.setAttribute("id", "label-" + code);
@@ -216,11 +218,11 @@
       text.setAttribute("y", meta.cy);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("dominant-baseline", "middle");
-      text.setAttribute("font-size", "10");
-      text.setAttribute("font-weight", "bold");
+      text.setAttribute("font-size", "5.5");
+      text.setAttribute("font-weight", "600");
       text.setAttribute("fill", STATUS[st].color);
-      text.setAttribute("opacity", "0.8");
-      text.textContent = meta.name.length > 12 ? meta.name.substring(0, 12) : meta.name;
+      text.setAttribute("opacity", "0.9");
+      text.textContent = meta.name.length > 15 ? meta.name.substring(0, 15) : meta.name;
 
       labelsGroup.appendChild(text);
     });
