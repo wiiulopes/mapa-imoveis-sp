@@ -169,6 +169,44 @@
     el.classList.remove("s-wip", "s-no", "s-ok");
     if (STATUS[st].cls) el.classList.add(STATUS[st].cls);
     applyFilterTo(el, st);
+    updateCityLabel(code);
+  }
+
+  function updateCityLabel(code) {
+    var label = document.getElementById("label-" + code);
+    if (!label) return;
+    var st = (db.cities[code] && db.cities[code].status) || "none";
+    label.setAttribute("fill", STATUS[st].color);
+  }
+
+  function renderLabels() {
+    var labelsGroup = document.getElementById("city-labels");
+    if (labelsGroup) labelsGroup.remove();
+
+    labelsGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    labelsGroup.setAttribute("id", "city-labels");
+    labelsGroup.setAttribute("pointer-events", "none");
+
+    Object.keys(cityIndex).forEach(function (code) {
+      var meta = cityIndex[code];
+      var st = (db.cities[code] && db.cities[code].status) || "none";
+
+      var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("id", "label-" + code);
+      text.setAttribute("x", meta.cx);
+      text.setAttribute("y", meta.cy);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("dominant-baseline", "middle");
+      text.setAttribute("font-size", "10");
+      text.setAttribute("font-weight", "bold");
+      text.setAttribute("fill", STATUS[st].color);
+      text.setAttribute("opacity", "0.8");
+      text.textContent = meta.name.length > 12 ? meta.name.substring(0, 12) : meta.name;
+
+      labelsGroup.appendChild(text);
+    });
+
+    svg.appendChild(labelsGroup);
   }
 
   function paintAll() {
@@ -697,6 +735,7 @@
     bindLegend();
     bindTools();
     paintAll();
+    renderLabels();
 
     $("#total-cities").textContent = Object.keys(cityIndex).length;
     console.log("Mapa pronto:", Object.keys(pathByCode).length, "municípios");
