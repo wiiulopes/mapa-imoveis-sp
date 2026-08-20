@@ -487,6 +487,38 @@
     $("#f-desc").focus();
   }
 
+  function formatCurrencyInput(e) {
+    var input = e.target;
+    var val = input.value.replace(/[^\d,.-]/g, "");
+
+    if (val.indexOf(",") > -1) {
+      var parts = val.split(",");
+      val = parts[0].replace(/\./g, "") + "," + parts[1];
+    } else {
+      val = val.replace(/\./g, "");
+    }
+
+    input.value = val;
+  }
+
+  function formatCurrencyBlur(e) {
+    var input = e.target;
+    var parsed = parseMoney(input.value);
+    if (isNaN(parsed) || parsed === 0) {
+      input.value = "";
+    } else {
+      input.value = parsed.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+  }
+
+  function formatCurrencyFocus(e) {
+    var input = e.target;
+    var parsed = parseMoney(input.value);
+    if (!isNaN(parsed) && parsed > 0) {
+      input.value = parsed.toString().replace(".", ",");
+    }
+  }
+
   function bindDrawer() {
     $("#backdrop").addEventListener("click", closeDrawer);
     $("#d-close").addEventListener("click", closeDrawer);
@@ -507,6 +539,17 @@
 
     $("#prop-form").addEventListener("submit", submitForm);
     $("#f-cancel").addEventListener("click", resetForm);
+
+    var valueField = $("#f-value");
+    var condoField = $("#f-condo");
+
+    valueField.addEventListener("input", formatCurrencyInput);
+    valueField.addEventListener("blur", formatCurrencyBlur);
+    valueField.addEventListener("focus", formatCurrencyFocus);
+
+    condoField.addEventListener("input", formatCurrencyInput);
+    condoField.addEventListener("blur", formatCurrencyBlur);
+    condoField.addEventListener("focus", formatCurrencyFocus);
 
     $("#list").addEventListener("click", function (e) {
       var btn = e.target.closest("button[data-act]");
