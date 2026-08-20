@@ -107,12 +107,15 @@
       var c = data.cities[code];
       if (!c.properties) c.properties = [];
       if (!c.status) c.status = "none";
-      // campos adicionados na v1.1 — imóveis antigos ficam com null
+      // campos adicionados gradualmente — imóveis antigos ficam com null
       c.properties.forEach(function (p) {
         if (!("area" in p)) p.area = null;
         if (!("bedrooms" in p)) p.bedrooms = null;
         if (!("parking" in p)) p.parking = null;
         if (!("condo" in p)) p.condo = null;
+        if (!("iptu" in p)) p.iptu = null;
+        if (!("visitDate" in p)) p.visitDate = null;
+        if (!("rating" in p)) p.rating = null;
       });
     });
     return data;
@@ -146,18 +149,34 @@
 
   function summary(code) {
     var c = db.cities[code];
-    var out = { count: 0, rentAvg: null, buyAvg: null, rentN: 0, buyN: 0, status: "none" };
+    var out = {
+      count: 0, rentAvg: null, buyAvg: null, rentN: 0, buyN: 0,
+      rentPerM2: null, buyPerM2: null, avgRating: null, status: "none"
+    };
     if (!c) return out;
     out.status = c.status || "none";
     out.count = c.properties.length;
-    var rent = [], buy = [];
+    var rent = [], buy = [], rentM2 = [], buyM2 = [], ratings = [];
     c.properties.forEach(function (p) {
       var v = Number(p.value);
       if (isNaN(v)) return;
       if (p.type === "rent") rent.push(v); else buy.push(v);
+
+      // R$/m² médio
+      var area = Number(p.area);
+      if (!isNaN(area) && area > 0) {
+        var perM2 = v / area;
+        if (p.type === "rent") rentM2.push(perM2); else buyM2.push(perM2);
+      }
+
+      // nota média
+      var rating = Number(p.rating);
+      if (!isNaN(rating) && rating >= 0) ratings.push(rating);
     });
     out.rentN = rent.length; out.buyN = buy.length;
     out.rentAvg = avg(rent); out.buyAvg = avg(buy);
+    out.rentPerM2 = avg(rentM2); out.buyPerM2 = avg(buyM2);
+    out.avgRating = avg(ratings);
     return out;
   }
 
@@ -469,6 +488,9 @@
     $("#f-area").value = "";
     $("#f-bedrooms").value = "";
     $("#f-parking").value = "";
+    $("#f-iptu").value = "";
+    $("#f-visit-date").value = "";
+    $("#f-rating").value = "";
     $("#f-url").value = "";
     $("#f-err").textContent = "";
     $("#f-submit").textContent = "Adicionar imóvel";
@@ -484,6 +506,9 @@
     var area = parseOptNum($("#f-area").value, false);
     var bedrooms = parseOptNum($("#f-bedrooms").value, true);
     var parking = parseOptNum($("#f-parking").value, true);
+    var iptu = parseOptNum($("#f-iptu").value, false);
+    var visitDate = $("#f-visit-date").value || null;
+    var rating = parseOptNum($("#f-rating").value, false);
     var url = $("#f-url").value.trim();
 
     if (!desc) { $("#f-err").textContent = "Informe uma descrição."; return; }
@@ -492,6 +517,8 @@
     if (isNaN(area)) { $("#f-err").textContent = "Área inválida — use apenas números."; return; }
     if (isNaN(bedrooms)) { $("#f-err").textContent = "Quantidade de quartos inválida."; return; }
     if (isNaN(parking)) { $("#f-err").textContent = "Quantidade de vagas inválida."; return; }
+    if (isNaN(iptu)) { $("#f-err").textContent = "IPTU inválido — use apenas números."; return; }
+    if (isNaN(rating)) { $("#f-err").textContent = "Nota inválida — use números de 0 a 5."; return; }
     if (url && !safeUrl(url)) { $("#f-err").textContent = "O link informado não é uma URL válida."; return; }
     $("#f-err").textContent = "";
 
@@ -501,6 +528,7 @@
       if (p) {
         p.description = desc; p.type = type; p.value = value; p.url = url;
         p.condo = condo; p.area = area; p.bedrooms = bedrooms; p.parking = parking;
+        p.iptu = iptu; p.visitDate = visitDate; p.rating = rating;
         p.updatedAt = new Date().toISOString();
       }
       toast("Imóvel atualizado.");
@@ -508,6 +536,7 @@
       c.properties.push({
         id: uid(), description: desc, type: type, value: value, url: url,
         condo: condo, area: area, bedrooms: bedrooms, parking: parking,
+        iptu: iptu, visitDate: visitDate, rating: rating,
         createdAt: new Date().toISOString()
       });
       // primeira entrada muda a cidade de "sem análise" para "em andamento"
@@ -580,6 +609,7 @@
 
     var valueField = $("#f-value");
     var condoField = $("#f-condo");
+    var iptuField = $("#f-iptu");
 
     valueField.addEventListener("input", formatCurrencyInput);
     valueField.addEventListener("blur", formatCurrencyBlur);
@@ -588,6 +618,10 @@
     condoField.addEventListener("input", formatCurrencyInput);
     condoField.addEventListener("blur", formatCurrencyBlur);
     condoField.addEventListener("focus", formatCurrencyFocus);
+
+    iptuField.addEventListener("input", formatCurrencyInput);
+    iptuField.addEventListener("blur", formatCurrencyBlur);
+    iptuField.addEventListener("focus", formatCurrencyFocus);
 
     $("#list").addEventListener("click", function (e) {
       var btn = e.target.closest("button[data-act]");
@@ -619,6 +653,9 @@
         $("#f-area").value = num(p.area) === null ? "" : String(p.area);
         $("#f-bedrooms").value = num(p.bedrooms) === null ? "" : String(p.bedrooms);
         $("#f-parking").value = num(p.parking) === null ? "" : String(p.parking);
+        $("#f-iptu").value = num(p.iptu) === null ? "" : String(p.iptu);
+        $("#f-visit-date").value = p.visitDate || "";
+        $("#f-rating").value = num(p.rating) === null ? "" : String(p.rating);
         $("#f-url").value = p.url || "";
         $("#f-submit").textContent = "Salvar alterações";
         $("#f-cancel").hidden = false;
@@ -708,6 +745,88 @@
     });
   }
 
+  /* -------- ranking lateral -------- */
+  var rankingVisible = false;
+  var heatmapMode = false;
+
+  function renderRanking(type) {
+    var list = $("#ranking-list");
+    var cities = [];
+    Object.keys(db.cities).forEach(function (code) {
+      var c = db.cities[code];
+      var sum = summary(code);
+      var avg = type === "rent" ? sum.rentAvg : sum.buyAvg;
+      if (avg !== null) {
+        cities.push({ code: code, name: cityIndex[code].name, avg: avg, perM2: type === "rent" ? sum.rentPerM2 : sum.buyPerM2 });
+      }
+    });
+    cities.sort(function (a, b) { return (b.avg || 0) - (a.avg || 0); });
+    list.innerHTML = cities.map(function (c) {
+      var perM2 = c.perM2 ? " · " + money(c.perM2) + "/m²" : "";
+      return '<div class="ranking-item" data-code="' + c.code + '"><div class="name">' + esc(c.name) + '</div><div class="price">' + money(c.avg) + perM2 + '</div></div>';
+    }).join("");
+
+    $$(".ranking-item", list).forEach(function (el) {
+      el.addEventListener("click", function () {
+        focusCity(el.getAttribute("data-code"), true);
+        openDrawer(el.getAttribute("data-code"));
+      });
+    });
+  }
+
+  function bindRanking() {
+    $("#toggle-ranking").addEventListener("click", function () {
+      rankingVisible = !rankingVisible;
+      $("#ranking-panel").hidden = !rankingVisible;
+      if (rankingVisible) renderRanking("rent");
+    });
+    $("#close-ranking").addEventListener("click", function () {
+      rankingVisible = false;
+      $("#ranking-panel").hidden = true;
+    });
+    $$(".tab-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        $$(".tab-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        renderRanking(btn.getAttribute("data-type"));
+      });
+    });
+  }
+
+  /* ---------- heatmap por preço ---------- */
+  function getHeatmapColor(value) {
+    if (!value) return STATUS.none.color;
+    if (value < 2000) return "#90ee90";
+    if (value < 3000) return "#ffd700";
+    if (value < 4000) return "#ff8c00";
+    return "#ff4500";
+  }
+
+  function paintHeatmap(code) {
+    var el = pathByCode[code];
+    if (!el) return;
+    if (!heatmapMode) {
+      paint(code);
+      return;
+    }
+    var c = db.cities[code];
+    var avg = c ? (summary(code).rentAvg || summary(code).buyAvg) : null;
+    el.setAttribute("fill", getHeatmapColor(avg));
+    el.classList.remove("s-wip", "s-no", "s-ok", "dim");
+  }
+
+  function paintAllHeatmap() {
+    Object.keys(pathByCode).forEach(paintHeatmap);
+  }
+
+  function bindHeatmap() {
+    $("#toggle-heatmap").addEventListener("click", function () {
+      heatmapMode = !heatmapMode;
+      this.style.opacity = heatmapMode ? "1" : "0.6";
+      if (heatmapMode) paintAllHeatmap(); else paintAll();
+    });
+  }
+
   /* ---------------- inicialização ---------------- */
   function init() {
     svg = document.getElementById("sp-map");
@@ -734,6 +853,8 @@
     bindSearch();
     bindLegend();
     bindTools();
+    bindRanking();
+    bindHeatmap();
     paintAll();
     renderLabels();
 

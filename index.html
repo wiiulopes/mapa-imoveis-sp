@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
@@ -25,6 +25,11 @@
       <button type="button" data-status="wip"  aria-pressed="false"><span class="dot wip"></span>Em andamento <span class="n" id="count-wip">0</span></button>
       <button type="button" data-status="no"   aria-pressed="false"><span class="dot no"></span>Não aprovado <span class="n" id="count-no">0</span></button>
       <button type="button" data-status="ok"   aria-pressed="false"><span class="dot ok"></span>Aprovado <span class="n" id="count-ok">0</span></button>
+    </div>
+
+    <div class="controls">
+      <button type="button" id="toggle-ranking" title="Mostrar ranking de cidades">📊 Ranking</button>
+      <button type="button" id="toggle-heatmap" title="Alternar modo heatmap por preço">🔥 Heatmap</button>
     </div>
 
     <div class="tools">
@@ -695,6 +700,15 @@
       <button type="button" id="zoom-reset" title="Enquadrar tudo">⤢</button>
     </div>
     <div class="hint">Clique numa cidade para cadastrar · scroll para zoom · arraste para mover</div>
+
+    <aside class="ranking-panel" id="ranking-panel" hidden>
+      <h3>Ranking de cidades <button type="button" id="close-ranking" aria-label="Fechar">✕</button></h3>
+      <div class="ranking-tabs">
+        <button type="button" class="tab-btn active" data-type="rent">Aluguel</button>
+        <button type="button" class="tab-btn" data-type="buy">Compra</button>
+      </div>
+      <div class="ranking-list" id="ranking-list"></div>
+    </aside>
   </main>
 
 </div>
@@ -758,6 +772,22 @@
           <input id="f-parking" type="text" inputmode="numeric" placeholder="opcional">
         </div>
       </div>
+      <div class="two">
+        <div class="field">
+          <label for="f-iptu">IPTU (R$/ano)</label>
+          <input id="f-iptu" type="text" inputmode="decimal" placeholder="opcional">
+        </div>
+        <div class="field">
+          <label for="f-visit-date">Data da visita</label>
+          <input id="f-visit-date" type="date" placeholder="opcional">
+        </div>
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="f-rating">Nota (0-5)</label>
+          <input id="f-rating" type="number" min="0" max="5" step="0.5" placeholder="opcional">
+        </div>
+      </div>
       <div class="field">
         <label for="f-url">Link do anúncio</label>
         <input id="f-url" type="url" placeholder="https://…">
@@ -778,3 +808,4 @@
 <script src="app.js"></script>
 </body>
 </html>
+

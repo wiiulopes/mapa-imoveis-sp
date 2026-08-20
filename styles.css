@@ -212,6 +212,44 @@ li.item a:hover { text-decoration: underline; }
 li.item .del { margin-left: auto; border: 0; background: none; color: var(--st-no); font-size: 12px; padding: 2px 4px; }
 .empty { font-size: 13px; color: var(--ink-soft); padding: 10px 0; }
 
+/* controls */
+.controls {
+  display: flex; gap: 6px; margin-left: auto;
+}
+.controls button {
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: #fff; font-size: 12px; cursor: pointer;
+}
+.controls button:hover { background: var(--bg); }
+
+/* ranking panel */
+.ranking-panel {
+  position: absolute; right: 14px; top: 70px; width: 240px; max-height: 500px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; z-index: 4;
+}
+.ranking-panel h3 {
+  margin: 0; padding: 12px; border-bottom: 1px solid var(--line); font-size: 14px; display: flex; justify-content: space-between; align-items: center;
+}
+.ranking-panel button { border: 0; background: none; cursor: pointer; font-size: 16px; padding: 2px 4px; }
+.ranking-tabs {
+  display: flex; border-bottom: 1px solid var(--line);
+}
+.tab-btn {
+  flex: 1; padding: 8px; border: 0; background: none; font-size: 12px; cursor: pointer; color: var(--ink-soft);
+  border-bottom: 2px solid transparent; transition: all .2s;
+}
+.tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+.ranking-list {
+  flex: 1; overflow-y: auto; padding: 8px;
+}
+.ranking-item {
+  padding: 8px; border-radius: 6px; margin-bottom: 4px; cursor: pointer; font-size: 12px; transition: all .2s;
+  background: #fafbfc; border: 1px solid transparent;
+}
+.ranking-item:hover { background: var(--bg); border-color: var(--line); }
+.ranking-item .name { font-weight: 600; margin-bottom: 2px; }
+.ranking-item .price { color: var(--ink-soft); font-size: 11px; }
+
 /* toast */
 #toast {
   position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px);
@@ -224,4 +262,5 @@ li.item .del { margin-left: auto; border: 0; background: none; color: var(--st-n
   .brand span, .hint { display: none; }
   .search input { width: 160px; }
   .tools { margin-left: 0; }
+  .ranking-panel { width: 220px; }
 }
